@@ -36,7 +36,7 @@ RUN git clone https://github.com/comfyanonymous/ComfyUI.git /app/ComfyUI \
     && cd /app/ComfyUI \
     && pip install --no-cache-dir -r requirements.txt
 
-# --- Clone custom nodes (13 total) ---
+# --- Clone custom nodes (18 total) ---
 RUN mkdir -p /app/custom_nodes && cd /app/custom_nodes \
     && git clone --depth 1 https://github.com/ltdrdata/ComfyUI-Manager.git \
     && git clone --depth 1 https://github.com/Lightricks/ComfyUI-LTXVideo.git \
@@ -50,7 +50,12 @@ RUN mkdir -p /app/custom_nodes && cd /app/custom_nodes \
     && git clone --depth 1 https://github.com/yolain/ComfyUI-Easy-Use.git \
     && git clone --depth 1 https://github.com/SLAPaper/ComfyUI-Image-Selector.git \
     && git clone --depth 1 https://github.com/kijai/ComfyUI-MelBandRoFormer.git \
-    && git clone --depth 1 https://github.com/rgthree/rgthree-comfy.git
+    && git clone --depth 1 https://github.com/rgthree/rgthree-comfy.git \
+    && git clone --depth 1 https://github.com/evanspearman/ComfyMath.git \
+    && git clone --depth 1 https://github.com/Fannovel16/comfyui_controlnet_aux.git \
+    && git clone --depth 1 https://github.com/kijai/ComfyUI-Lotus.git \
+    && git clone --depth 1 https://github.com/chflame163/ComfyUI_LayerStyle.git \
+    && git clone --depth 1 https://github.com/theUpsider/ComfyUI-Styles_CSV_Loader.git
 
 # --- Install requirements for each custom node ---
 RUN for dir in /app/custom_nodes/*/; do \
