@@ -68,6 +68,7 @@ RUN python3 -m pip install --no-cache-dir \
     imageio imageio-ffmpeg av \
     librosa soundfile \
     scipy scikit-image \
+    simpleeval \
     jupyterlab
 
 # --- Re-install CUDA PyTorch (node requirements may have overwritten with CPU version) ---
