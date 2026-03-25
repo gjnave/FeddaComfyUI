@@ -48,6 +48,7 @@ WORKFLOW_DEST="/app/ComfyUI/user/default/workflows"
 mkdir -p "$WORKFLOW_DEST"
 if [ -d "/app/workflows" ]; then
     cp -n /app/workflows/*.json "$WORKFLOW_DEST/" 2>/dev/null || true
+    cp -n /app/workflows/*.JSON "$WORKFLOW_DEST/" 2>/dev/null || true
     echo "[WORKFLOWS] Bundled workflows copied to ComfyUI."
 fi
 
