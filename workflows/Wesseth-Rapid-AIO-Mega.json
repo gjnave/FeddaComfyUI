@@ -179,7 +179,7 @@
   },
   "51": {
     "inputs": {
-      "lora_01": "wan22-video8-drone-16-sel-2.safetensors",
+      "lora_01": "wan22-camera-drone-rank16-i2v-a14b.safetensors",
       "strength_01": 1,
       "lora_02": "None",
       "strength_02": 0.84,
@@ -203,7 +203,7 @@
   },
   "53": {
     "inputs": {
-      "download_links": "",
+      "download_links": "https://huggingface.co/Phr00t/WAN2.2-14B-Rapid-AllInOne/resolve/main/Mega-v9/wan2.2-rapid-mega-aio-v9.safetensors checkpoints\nhttps://huggingface.co/wangkanai/wan22-fp8-i2v-loras/resolve/main/loras/wan/wan22-camera-drone-rank16-i2v-a14b.safetensors loras",
       "auto_download": true,
       "max_concurrent_downloads": 3,
       "max_download_speed_mbps": 0,
