@@ -1,0 +1,5 @@
+name,prompt,negative_prompt
+No Style,,
+Cinematic,"cinematic film still, dramatic lighting, shallow depth of field, vignette, highly detailed","anime, cartoon, graphic, text, painting, crayon, graphite, abstract, glitch, deformed, mutated, ugly, disfigured"
+Drone Shot,"aerial drone shot, bird's eye view, sweeping landscape, smooth camera movement, cinematic","low quality, blurry, distorted, deformed, ugly"
+Real Estate,"professional real estate photography, wide angle lens, bright and airy, natural lighting, high quality","dark, gloomy, cluttered, messy, low quality"

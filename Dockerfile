@@ -95,6 +95,7 @@ RUN python3 -m pip install --no-cache-dir --force-reinstall \
 COPY scripts/start.sh /app/scripts/start.sh
 COPY config/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 COPY config/extra_model_paths.yaml /app/ComfyUI/extra_model_paths.yaml
+COPY config/styles.csv /app/ComfyUI/styles.csv
 COPY src/rp_handler.py /app/src/rp_handler.py
 COPY src/network_volume.py /app/src/network_volume.py
 COPY workflows/ /app/workflows/
