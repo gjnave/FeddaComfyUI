@@ -1,215 +1,725 @@
 {
-  "8": {
-    "inputs": {
-      "seed": 766710522727898,
-      "steps": 4,
-      "cfg": 1,
-      "sampler_name": "ipndm",
-      "scheduler": "beta",
-      "denoise": 1,
-      "model": [
-        "32",
-        0
+  "id": "00000000-0000-0000-0000-000000000000",
+  "revision": 0,
+  "last_node_id": 53,
+  "last_link_id": 32,
+  "nodes": [
+    {
+      "id": 8,
+      "type": "KSampler",
+      "pos": [
+        1852.542578125,
+        130
       ],
-      "positive": [
-        "28",
-        0
+      "size": [
+        270,
+        262
       ],
-      "negative": [
-        "28",
-        1
+      "flags": {},
+      "order": 8,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "model",
+          "type": "MODEL",
+          "link": 17
+        },
+        {
+          "name": "positive",
+          "type": "CONDITIONING",
+          "link": 18
+        },
+        {
+          "name": "negative",
+          "type": "CONDITIONING",
+          "link": 19
+        },
+        {
+          "name": "latent_image",
+          "type": "LATENT",
+          "link": 20
+        }
       ],
-      "latent_image": [
-        "28",
-        2
-      ]
-    },
-    "class_type": "KSampler",
-    "_meta": {
-      "title": "KSampler"
-    }
-  },
-  "9": {
-    "inputs": {
-      "text": "a drone shot of the house",
-      "speak_and_recognation": {
-        "__value__": [
-          false,
-          true
-        ]
+      "outputs": [
+        {
+          "name": "LATENT",
+          "type": "LATENT",
+          "links": [
+            23
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.18.1",
+        "Node name for S&R": "KSampler"
       },
-      "clip": [
-        "51",
+      "widgets_values": [
+        766710522727898,
+        "randomize",
+        4,
+        1,
+        "ipndm",
+        "beta",
         1
       ]
     },
-    "class_type": "CLIPTextEncode",
-    "_meta": {
-      "title": "CLIP Text Encode (Prompt)"
-    }
-  },
-  "10": {
-    "inputs": {
-      "text": "over satturated",
-      "speak_and_recognation": {
-        "__value__": [
-          false,
-          true
-        ]
+    {
+      "id": 9,
+      "type": "CLIPTextEncode",
+      "pos": [
+        982.542578125,
+        318
+      ],
+      "size": [
+        400,
+        200
+      ],
+      "flags": {},
+      "order": 5,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "clip",
+          "type": "CLIP",
+          "link": 21
+        }
+      ],
+      "outputs": [
+        {
+          "name": "CONDITIONING",
+          "type": "CONDITIONING",
+          "links": [
+            25
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.18.1",
+        "Node name for S&R": "CLIPTextEncode"
       },
-      "clip": [
-        "51",
-        1
+      "widgets_values": [
+        "a drone shot of the house"
       ]
     },
-    "class_type": "CLIPTextEncode",
-    "_meta": {
-      "title": "Negative Prompt (leave blank cuz 1 CFG)"
-    }
-  },
-  "11": {
-    "inputs": {
-      "samples": [
-        "8",
-        0
+    {
+      "id": 10,
+      "type": "CLIPTextEncode",
+      "pos": [
+        982.542578125,
+        648
       ],
-      "vae": [
-        "26",
-        2
-      ]
-    },
-    "class_type": "VAEDecode",
-    "_meta": {
-      "title": "VAE Decode"
-    }
-  },
-  "16": {
-    "inputs": {
-      "image": "720-E-Rand-Rd-Mount-Prospect-IL-Building-Photo-1-LargeHighDefinition.jpg"
-    },
-    "class_type": "LoadImage",
-    "_meta": {
-      "title": "Start Frame (Optional)"
-    }
-  },
-  "26": {
-    "inputs": {
-      "ckpt_name": "wan2.2-rapid-mega-aio-v9.safetensors"
-    },
-    "class_type": "CheckpointLoaderSimple",
-    "_meta": {
-      "title": "Load Checkpoint"
-    }
-  },
-  "28": {
-    "inputs": {
-      "width": 1024,
-      "height": 720,
-      "length": 81,
-      "batch_size": 1,
-      "strength": 1,
-      "positive": [
-        "9",
-        0
+      "size": [
+        400,
+        200
       ],
-      "negative": [
-        "10",
-        0
+      "flags": {},
+      "order": 6,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "clip",
+          "type": "CLIP",
+          "link": 22
+        }
       ],
-      "vae": [
-        "26",
-        2
+      "outputs": [
+        {
+          "name": "CONDITIONING",
+          "type": "CONDITIONING",
+          "links": [
+            26
+          ]
+        }
       ],
-      "control_video": [
-        "16",
-        0
+      "title": "Negative Prompt (leave blank cuz 1 CFG)",
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.18.1",
+        "Node name for S&R": "CLIPTextEncode"
+      },
+      "widgets_values": [
+        "over satturated"
       ]
     },
-    "class_type": "WanVaceToVideo",
-    "_meta": {
-      "title": "T2V=Strength 0, I2V=Strength 1"
-    }
-  },
-  "32": {
-    "inputs": {
-      "shift": 8,
-      "model": [
-        "51",
-        0
-      ]
-    },
-    "class_type": "ModelSamplingSD3",
-    "_meta": {
-      "title": "ModelSamplingSD3"
-    }
-  },
-  "39": {
-    "inputs": {
-      "frame_rate": 16,
-      "loop_count": 0,
-      "filename_prefix": "rapid-mega-out/vid",
-      "format": "video/h264-mp4",
-      "pix_fmt": "yuv420p",
-      "crf": 19,
-      "save_metadata": true,
-      "trim_to_audio": false,
-      "pingpong": false,
-      "save_output": true,
-      "images": [
-        "11",
-        0
-      ]
-    },
-    "class_type": "VHS_VideoCombine",
-    "_meta": {
-      "title": "Video Combine 🎥🅥🅗🅢"
-    }
-  },
-  "51": {
-    "inputs": {
-      "lora_01": "wan22-camera-drone-rank16-i2v-a14b.safetensors",
-      "strength_01": 1,
-      "lora_02": "None",
-      "strength_02": 0.84,
-      "lora_03": "None",
-      "strength_03": 0.8,
-      "lora_04": "None",
-      "strength_04": 0.93,
-      "model": [
-        "26",
-        0
+    {
+      "id": 11,
+      "type": "VAEDecode",
+      "pos": [
+        2222.542578125,
+        130
       ],
-      "clip": [
-        "26",
-        1
-      ]
-    },
-    "class_type": "Lora Loader Stack (rgthree)",
-    "_meta": {
-      "title": "Lora Loader Stack (rgthree)"
-    }
-  },
-  "53": {
-    "inputs": {
-      "download_links": "https://huggingface.co/Phr00t/WAN2.2-14B-Rapid-AllInOne/resolve/main/Mega-v9/wan2.2-rapid-mega-aio-v9.safetensors checkpoints\nhttps://huggingface.co/wangkanai/wan22-fp8-i2v-loras/resolve/main/loras/wan/wan22-camera-drone-rank16-i2v-a14b.safetensors loras",
-      "auto_download": true,
-      "max_concurrent_downloads": 3,
-      "max_download_speed_mbps": 0,
-      "enable_resume": true,
-      "validate_files": false,
-      "enable_notifications": true,
-      "auto_organize": false,
-      "hf_token": "",
-      "speak_and_recognation": {
-        "__value__": [
-          false,
-          true
-        ]
+      "size": [
+        140,
+        46
+      ],
+      "flags": {},
+      "order": 9,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "samples",
+          "type": "LATENT",
+          "link": 23
+        },
+        {
+          "name": "vae",
+          "type": "VAE",
+          "link": 24
+        }
+      ],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            30
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.18.1",
+        "Node name for S&R": "VAEDecode"
       }
     },
-    "class_type": "HuggingFaceDownloader",
-    "_meta": {
-      "title": "🤗 HuggingFace Model Downloader Pro"
+    {
+      "id": 16,
+      "type": "LoadImage",
+      "pos": [
+        100,
+        130
+      ],
+      "size": [
+        282.798828125,
+        102
+      ],
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            28
+          ]
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": null
+        }
+      ],
+      "title": "Start Frame (Optional)",
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.18.1",
+        "Node name for S&R": "LoadImage"
+      },
+      "widgets_values": [
+        "720-E-Rand-Rd-Mount-Prospect-IL-Building-Photo-1-LargeHighDefinition.jpg",
+        "image"
+      ]
+    },
+    {
+      "id": 26,
+      "type": "CheckpointLoaderSimple",
+      "pos": [
+        100,
+        362
+      ],
+      "size": [
+        270,
+        98
+      ],
+      "flags": {},
+      "order": 1,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "MODEL",
+          "type": "MODEL",
+          "links": [
+            31
+          ]
+        },
+        {
+          "name": "CLIP",
+          "type": "CLIP",
+          "links": [
+            32
+          ]
+        },
+        {
+          "name": "VAE",
+          "type": "VAE",
+          "links": [
+            24,
+            27
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.18.1",
+        "Node name for S&R": "CheckpointLoaderSimple"
+      },
+      "widgets_values": [
+        "wan2.2-rapid-mega-aio-v9.safetensors"
+      ]
+    },
+    {
+      "id": 28,
+      "type": "WanVaceToVideo",
+      "pos": [
+        1482.542578125,
+        130
+      ],
+      "size": [
+        270,
+        254
+      ],
+      "flags": {},
+      "order": 7,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "positive",
+          "type": "CONDITIONING",
+          "link": 25
+        },
+        {
+          "name": "negative",
+          "type": "CONDITIONING",
+          "link": 26
+        },
+        {
+          "name": "vae",
+          "type": "VAE",
+          "link": 27
+        },
+        {
+          "name": "control_video",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": 28
+        },
+        {
+          "name": "control_masks",
+          "shape": 7,
+          "type": "MASK",
+          "link": null
+        },
+        {
+          "name": "reference_image",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "name": "positive",
+          "type": "CONDITIONING",
+          "links": [
+            18
+          ]
+        },
+        {
+          "name": "negative",
+          "type": "CONDITIONING",
+          "links": [
+            19
+          ]
+        },
+        {
+          "name": "latent",
+          "type": "LATENT",
+          "links": [
+            20
+          ]
+        },
+        {
+          "name": "trim_latent",
+          "type": "INT",
+          "links": null
+        }
+      ],
+      "title": "T2V=Strength 0, I2V=Strength 1",
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.18.1",
+        "Node name for S&R": "WanVaceToVideo"
+      },
+      "widgets_values": [
+        1024,
+        720,
+        81,
+        1,
+        1
+      ]
+    },
+    {
+      "id": 32,
+      "type": "ModelSamplingSD3",
+      "pos": [
+        982.542578125,
+        130
+      ],
+      "size": [
+        270,
+        58
+      ],
+      "flags": {},
+      "order": 4,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "model",
+          "type": "MODEL",
+          "link": 29
+        }
+      ],
+      "outputs": [
+        {
+          "name": "MODEL",
+          "type": "MODEL",
+          "links": [
+            17
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.18.1",
+        "Node name for S&R": "ModelSamplingSD3"
+      },
+      "widgets_values": [
+        8
+      ]
+    },
+    {
+      "id": 39,
+      "type": "VHS_VideoCombine",
+      "pos": [
+        2462.542578125,
+        130
+      ],
+      "size": [
+        220.7333984375,
+        334
+      ],
+      "flags": {},
+      "order": 10,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 30
+        },
+        {
+          "name": "audio",
+          "shape": 7,
+          "type": "AUDIO",
+          "link": null
+        },
+        {
+          "name": "meta_batch",
+          "shape": 7,
+          "type": "VHS_BatchManager",
+          "link": null
+        },
+        {
+          "name": "vae",
+          "shape": 7,
+          "type": "VAE",
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "name": "Filenames",
+          "type": "VHS_FILENAMES",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-videohelpersuite",
+        "ver": "449839959f0153fb8a57211a9364c55163935ca9",
+        "Node name for S&R": "VHS_VideoCombine"
+      },
+      "widgets_values": {
+        "frame_rate": 16,
+        "loop_count": 0,
+        "filename_prefix": "rapid-mega-out/vid",
+        "format": "video/h264-mp4",
+        "pix_fmt": "yuv420p",
+        "crf": 19,
+        "save_metadata": true,
+        "trim_to_audio": false,
+        "pingpong": false,
+        "save_output": true,
+        "videopreview": {
+          "hidden": false,
+          "paused": false,
+          "params": {}
+        }
+      }
+    },
+    {
+      "id": 51,
+      "type": "Lora Loader Stack (rgthree)",
+      "pos": [
+        600,
+        130
+      ],
+      "size": [
+        282.542578125,
+        246
+      ],
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "model",
+          "type": "MODEL",
+          "link": 31
+        },
+        {
+          "name": "clip",
+          "type": "CLIP",
+          "link": 32
+        }
+      ],
+      "outputs": [
+        {
+          "name": "MODEL",
+          "type": "MODEL",
+          "links": [
+            29
+          ]
+        },
+        {
+          "name": "CLIP",
+          "type": "CLIP",
+          "links": [
+            21,
+            22
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "rgthree-comfy",
+        "ver": "8ff50e4521881eca1fe26aec9615fc9362474931",
+        "Node name for S&R": "Lora Loader Stack (rgthree)"
+      },
+      "widgets_values": [
+        "wan22-camera-drone-rank16-i2v-a14b.safetensors",
+        1,
+        "None",
+        0.84,
+        "None",
+        0.8,
+        "None",
+        0.93
+      ]
+    },
+    {
+      "id": 53,
+      "type": "HuggingFaceDownloader",
+      "pos": [
+        100,
+        590
+      ],
+      "size": [
+        400,
+        300
+      ],
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "status_report",
+          "type": "STRING",
+          "links": null
+        },
+        {
+          "name": "download_history",
+          "type": "STRING",
+          "links": null
+        }
+      ],
+      "properties": {
+        "aux_id": "comfyuistudio/ComfyUI-Studio-nodes",
+        "ver": "bf895c75df55a2e14bd4c34a3fa82826d4b19d71",
+        "Node name for S&R": "HuggingFaceDownloader"
+      },
+      "widgets_values": [
+        "https://huggingface.co/Phr00t/WAN2.2-14B-Rapid-AllInOne/resolve/main/Mega-v9/wan2.2-rapid-mega-aio-v9.safetensors checkpoints\nhttps://huggingface.co/wangkanai/wan22-fp8-i2v-loras/resolve/main/loras/wan/wan22-camera-drone-rank16-i2v-a14b.safetensors loras",
+        true,
+        3,
+        0,
+        true,
+        false,
+        true,
+        false,
+        ""
+      ]
     }
-  }
+  ],
+  "links": [
+    [
+      17,
+      32,
+      0,
+      8,
+      0,
+      "MODEL"
+    ],
+    [
+      18,
+      28,
+      0,
+      8,
+      1,
+      "CONDITIONING"
+    ],
+    [
+      19,
+      28,
+      1,
+      8,
+      2,
+      "CONDITIONING"
+    ],
+    [
+      20,
+      28,
+      2,
+      8,
+      3,
+      "LATENT"
+    ],
+    [
+      21,
+      51,
+      1,
+      9,
+      0,
+      "CLIP"
+    ],
+    [
+      22,
+      51,
+      1,
+      10,
+      0,
+      "CLIP"
+    ],
+    [
+      23,
+      8,
+      0,
+      11,
+      0,
+      "LATENT"
+    ],
+    [
+      24,
+      26,
+      2,
+      11,
+      1,
+      "VAE"
+    ],
+    [
+      25,
+      9,
+      0,
+      28,
+      0,
+      "CONDITIONING"
+    ],
+    [
+      26,
+      10,
+      0,
+      28,
+      1,
+      "CONDITIONING"
+    ],
+    [
+      27,
+      26,
+      2,
+      28,
+      2,
+      "VAE"
+    ],
+    [
+      28,
+      16,
+      0,
+      28,
+      3,
+      "IMAGE"
+    ],
+    [
+      29,
+      51,
+      0,
+      32,
+      0,
+      "MODEL"
+    ],
+    [
+      30,
+      11,
+      0,
+      39,
+      0,
+      "IMAGE"
+    ],
+    [
+      31,
+      26,
+      0,
+      51,
+      0,
+      "MODEL"
+    ],
+    [
+      32,
+      26,
+      1,
+      51,
+      1,
+      "CLIP"
+    ]
+  ],
+  "groups": [],
+  "config": {},
+  "extra": {
+    "ds": {
+      "scale": 0.38554328942953164,
+      "offset": [
+        1377.022780346201,
+        521.3978929128002
+      ]
+    },
+    "frontendVersion": "1.42.8",
+    "VHS_latentpreview": false,
+    "VHS_latentpreviewrate": 0,
+    "VHS_MetadataImage": true,
+    "VHS_KeepIntermediate": true
+  },
+  "version": 0.4
 }
