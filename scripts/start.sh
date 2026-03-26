@@ -65,9 +65,34 @@ fi
 
 # --- 6. Launch services ---
 echo ""
-echo "========================================="
-echo "  Starting services..."
-echo "  ComfyUI: port 8188"
-echo "  Jupyter:  port 8888"
-echo "========================================="
-exec supervisord -c /etc/supervisor/conf.d/supervisord.conf
+if [ "${SERVERLESS}" = "true" ]; then
+    echo "========================================="
+    echo "  Mode: SERVERLESS"
+    echo "  ComfyUI: background (localhost:8188)"
+    echo "  Handler: RunPod serverless"
+    echo "========================================="
+
+    # In serverless mode, set Manager to offline (no external calls)
+    if [ -d "$MANAGER_DIR" ]; then
+        cat > "$MANAGER_DIR/user/config.ini" << 'MGREOF'
+[default]
+security_level = weak
+network_mode = offline
+MGREOF
+    fi
+
+    # Start ComfyUI in background
+    python3 /app/ComfyUI/main.py --disable-auto-launch --disable-metadata --listen --port 8188 &
+    echo $! > /tmp/comfyui.pid
+
+    # Start RunPod handler
+    cd /app/src
+    exec python3 -u rp_handler.py
+else
+    echo "========================================="
+    echo "  Mode: POD (interactive)"
+    echo "  ComfyUI: port 8188"
+    echo "  Jupyter:  port 8888"
+    echo "========================================="
+    exec supervisord -c /etc/supervisor/conf.d/supervisord.conf
+fi

@@ -36,7 +36,7 @@ RUN git clone https://github.com/comfyanonymous/ComfyUI.git /app/ComfyUI \
     && cd /app/ComfyUI \
     && pip install --no-cache-dir -r requirements.txt
 
-# --- Clone custom nodes (25 total) ---
+# --- Clone custom nodes (27 total) ---
 RUN mkdir -p /app/custom_nodes && cd /app/custom_nodes \
     && git clone --depth 1 https://github.com/ltdrdata/ComfyUI-Manager.git \
     && git clone --depth 1 https://github.com/Lightricks/ComfyUI-LTXVideo.git \
@@ -62,7 +62,9 @@ RUN mkdir -p /app/custom_nodes && cd /app/custom_nodes \
     && git clone --depth 1 https://github.com/kijai/ComfyUI-Florence2.git \
     && git clone --depth 1 https://github.com/kijai/ComfyUI-segment-anything-2.git \
     && git clone --depth 1 https://github.com/Fannovel16/ComfyUI-Frame-Interpolation.git \
-    && git clone --depth 1 https://github.com/SeargeDP/ComfyUI_Searge_LLM.git
+    && git clone --depth 1 https://github.com/SeargeDP/ComfyUI_Searge_LLM.git \
+    && git clone --depth 1 https://github.com/bash-j/mikey_nodes.git \
+    && git clone --depth 1 https://github.com/alexopus/ComfyUI-Image-Saver.git
 
 # --- Install requirements for each custom node ---
 RUN for dir in /app/custom_nodes/*/; do \
@@ -81,7 +83,8 @@ RUN python3 -m pip install --no-cache-dir \
     librosa soundfile \
     scipy scikit-image \
     simpleeval \
-    jupyterlab
+    jupyterlab \
+    runpod requests websocket-client
 
 # --- Re-install CUDA PyTorch (node requirements may have overwritten with CPU version) ---
 RUN python3 -m pip install --no-cache-dir --force-reinstall \
@@ -91,6 +94,9 @@ RUN python3 -m pip install --no-cache-dir --force-reinstall \
 # --- Copy app files ---
 COPY scripts/start.sh /app/scripts/start.sh
 COPY config/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+COPY config/extra_model_paths.yaml /app/ComfyUI/extra_model_paths.yaml
+COPY src/rp_handler.py /app/src/rp_handler.py
+COPY src/network_volume.py /app/src/network_volume.py
 COPY workflows/ /app/workflows/
 
 RUN chmod +x /app/scripts/start.sh
