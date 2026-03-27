@@ -406,6 +406,30 @@ def handler(job):
         if ws and ws.connected:
             ws.close()
 
+    # Fallback: scan output folder if history returned nothing
+    if not output_data:
+        output_dir = "/workspace/output"
+        try:
+            for root, dirs, files in os.walk(output_dir):
+                for file in files:
+                    if not file.lower().endswith((".png", ".jpg", ".jpeg", ".mp4", ".gif")):
+                        continue
+
+                    filepath = os.path.join(root, file)
+                    with open(filepath, "rb") as f:
+                        file_bytes = f.read()
+
+                    b64 = base64.b64encode(file_bytes).decode("utf-8")
+                    media_type = "video" if file.endswith(".mp4") else "image"
+                    output_data.append({
+                        "filename": file,
+                        "type": "base64",
+                        "media": media_type,
+                        "data": b64
+                    })
+        except Exception as e:
+            errors.append(f"Output scan error: {e}")
+
     result = {}
     if output_data:
         result["images"] = output_data
