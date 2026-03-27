@@ -220,7 +220,7 @@
         "Node name for S&R": "LoadImage"
       },
       "widgets_values": [
-        "720-E-Rand-Rd-Mount-Prospect-IL-Building-Photo-1-LargeHighDefinition.jpg",
+        "input_image.png",
         "image"
       ]
     },
