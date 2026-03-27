@@ -25,7 +25,7 @@ mkdir -p "$MODELS_DIR"/{checkpoints,diffusion_models,clip,text_encoders,vae,lora
 mkdir -p "$VOLUME/output"
 mkdir -p "$VOLUME/input"
 
-# --- 2. Symlink ComfyUI model directories to network volume ---
+# --- 2.5 Symlink ComfyUI model directories to network volume ---
 echo "[SETUP] Symlinking model directories to $VOLUME..."
 for dir in checkpoints diffusion_models clip text_encoders vae loras model_patches; do
     rm -rf "/app/ComfyUI/models/$dir"
@@ -37,6 +37,30 @@ rm -rf /app/ComfyUI/output
 ln -sf "$VOLUME/output" /app/ComfyUI/output
 rm -rf /app/ComfyUI/input
 ln -sf "$VOLUME/input" /app/ComfyUI/input
+
+# --- 2.6 Download required models if missing ---
+download_if_missing() {
+    local url="$1"
+    local dest="$2"
+
+    if [ -f "$dest" ]; then
+        echo "[MODELS] Exists: $dest"
+    else
+        echo "[MODELS] Downloading: $dest"
+        mkdir -p "$(dirname "$dest")"
+        curl -L "$url" -o "$dest"
+    fi
+}
+
+# WAN 2.2 AIO checkpoint
+download_if_missing \
+  "https://huggingface.co/Phr00t/WAN2.2-14B-Rapid-AllInOne/resolve/main/Mega-v9/wan2.2-rapid-mega-aio-v9.safetensors?download=true" \
+  "$MODELS_DIR/checkpoints/wan2.2-rapid-mega-aio-v9.safetensors"
+
+# Drone LoRA
+download_if_missing \
+  "https://huggingface.co/UnifiedHorusRA/DroneShot-Wan2.2_2.1-I2V-A14B/resolve/main/wan22-video8-drone-16-sel-2.safetensors" \
+  "$MODELS_DIR/loras/wan22-video8-drone-16-sel-2.safetensors"
 
 # --- 3. Custom nodes: sync from image to workspace (copy missing ones) ---
 mkdir -p "$VOLUME/custom_nodes"
