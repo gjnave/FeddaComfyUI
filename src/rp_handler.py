@@ -3,7 +3,7 @@ RunPod Serverless Handler for FeddaComfyUI.
 
 Adapted from the official runpod-workers/worker-comfyui handler.
 Receives workflow JSON via RunPod API, submits to local ComfyUI,
-monitors execution via WebSocket, and returns output images.
+monitors execution via WebSocket, and returns output images/videos/files.
 """
 
 import runpod
@@ -70,7 +70,7 @@ def _attempt_websocket_reconnect(ws_url, max_attempts, delay_s, initial_error):
     for attempt in range(max_attempts):
         srv_status = _comfy_server_status()
         if not srv_status["reachable"]:
-            print(f"[HANDLER] ComfyUI HTTP unreachable — aborting reconnect")
+            print("[HANDLER] ComfyUI HTTP unreachable - aborting reconnect")
             raise websocket.WebSocketConnectionClosedException(
                 "ComfyUI HTTP unreachable during websocket reconnect"
             )
@@ -160,7 +160,10 @@ def upload_images(images):
             image_data_uri = image["image"]
             base64_data = image_data_uri.split(",", 1)[1] if "," in image_data_uri else image_data_uri
             blob = base64.b64decode(base64_data)
-            files = {"image": (name, BytesIO(blob), "image/png"), "overwrite": (None, "true")}
+            files = {
+                "image": (name, BytesIO(blob), "image/png"),
+                "overwrite": (None, "true"),
+            }
             response = requests.post(f"http://{COMFY_HOST}/upload/image", files=files, timeout=30)
             response.raise_for_status()
             responses.append(f"Uploaded {name}")
@@ -246,7 +249,7 @@ def handler(job):
 
     for node_id, node in workflow.items():
         if node.get("class_type") == "LoadImage":
-           print(f"[DEBUG] LoadImage node {node_id}: {json.dumps(node, indent=2)}")
+            print(f"[DEBUG] LoadImage node {node_id}: {json.dumps(node, indent=2)}")
 
     if not check_server(
         f"http://{COMFY_HOST}/",
@@ -268,7 +271,7 @@ def handler(job):
 
     try:
         ws_url = f"ws://{COMFY_HOST}/ws?clientId={client_id}"
-        print(f"[HANDLER] Connecting to websocket...")
+        print("[HANDLER] Connecting to websocket...")
         ws = websocket.WebSocket()
         ws.connect(ws_url, timeout=10)
 
@@ -283,7 +286,7 @@ def handler(job):
                 raise
             raise ValueError(f"Error queuing workflow: {e}")
 
-        print(f"[HANDLER] Waiting for execution...")
+        print("[HANDLER] Waiting for execution...")
         execution_done = False
         while True:
             try:
@@ -294,13 +297,16 @@ def handler(job):
                     if msg_type == "executing":
                         data = message.get("data", {})
                         if data.get("node") is None and data.get("prompt_id") == prompt_id:
-                            print(f"[HANDLER] Execution finished.")
+                            print("[HANDLER] Execution finished.")
                             execution_done = True
                             break
                     elif msg_type == "execution_error":
                         data = message.get("data", {})
                         if data.get("prompt_id") == prompt_id:
-                            error_details = f"Node: {data.get('node_type')} ({data.get('node_id')}), Error: {data.get('exception_message')}"
+                            error_details = (
+                                f"Node: {data.get('node_type')} ({data.get('node_id')}), "
+                                f"Error: {data.get('exception_message')}"
+                            )
                             print(f"[HANDLER] Execution error: {error_details}")
                             errors.append(error_details)
                             break
@@ -315,7 +321,7 @@ def handler(job):
         if not execution_done and not errors:
             raise ValueError("Execution loop exited without completion or error.")
 
-        print(f"[HANDLER] Fetching history...")
+        print("[HANDLER] Fetching history...")
         history = get_history(prompt_id)
         if prompt_id not in history:
             if not errors:
@@ -325,95 +331,62 @@ def handler(job):
 
         outputs = history.get(prompt_id, {}).get("outputs", {})
         print(f"[HANDLER] Processing {len(outputs)} output node(s)...")
+        print("[DEBUG] OUTPUTS:", json.dumps(outputs, indent=2))
 
         for node_id, node_output in outputs.items():
-            print("DEBUG OUTPUTS:", outputs)
-
-    # -------- IMAGES --------
-        if "images" in node_output:
-            for image_info in node_output["images"]:
-                filename = image_info.get("filename")
-                subfolder = image_info.get("subfolder", "")
-                img_type = image_info.get("type")
-
-                if img_type == "temp" or not filename:
+            for output_type, items in node_output.items():
+                if not isinstance(items, list):
                     continue
 
-                image_bytes = get_image_data(filename, subfolder, img_type)
-                if not image_bytes:
-                    errors.append(f"Failed to fetch {filename}")
-                    continue
+                for file_info in items:
+                    if not isinstance(file_info, dict):
+                        continue
 
-                file_extension = os.path.splitext(filename)[1] or ".png"
+                    filename = file_info.get("filename")
+                    subfolder = file_info.get("subfolder", "")
+                    filetype = file_info.get("type")
 
-                if os.environ.get("BUCKET_ENDPOINT_URL"):
-                    try:
-                        with tempfile.NamedTemporaryFile(suffix=file_extension, delete=False) as tmp:
-                            tmp.write(image_bytes)
-                          tmp_path = tmp.name
-                        s3_url = rp_upload.upload_image(job_id, tmp_path)
-                        os.remove(tmp_path)
+                    if not filename:
+                        continue
 
-                        output_data.append({
-                            "filename": filename,
-                            "type": "s3_url",
-                            "data": s3_url
-                        })
+                    file_bytes = get_image_data(filename, subfolder, filetype)
+                    if not file_bytes:
+                        errors.append(f"Failed to fetch {filename}")
+                        continue
 
-                    except Exception as e:
-                        errors.append(f"S3 upload error for {filename}: {e}")
+                    file_extension = os.path.splitext(filename)[1] or ""
 
-                else:
-                    b64 = base64.b64encode(image_bytes).decode("utf-8")
-                    output_data.append({
-                        "filename": filename,
-                        "type": "base64",
-                        "data": b64
-                    })
+                    if os.environ.get("BUCKET_ENDPOINT_URL"):
+                        try:
+                            with tempfile.NamedTemporaryFile(
+                                suffix=file_extension, delete=False
+                            ) as tmp:
+                                tmp.write(file_bytes)
+                                tmp_path = tmp.name
 
-    # -------- VIDEOS (VHS_VideoCombine) --------
-             if "videos" in node_output:
-        for video_info in node_output["videos"]:
-            filename = video_info.get("filename")
-            subfolder = video_info.get("subfolder", "")
-            vid_type = video_info.get("type")
+                            s3_url = rp_upload.upload_image(job_id, tmp_path)
+                            os.remove(tmp_path)
 
-            if not filename:
-                continue
-
-            video_bytes = get_image_data(filename, subfolder, vid_type)
-            if not video_bytes:
-                errors.append(f"Failed to fetch {filename}")
-                continue
-
-            file_extension = os.path.splitext(filename)[1] or ".mp4"
-
-            if os.environ.get("BUCKET_ENDPOINT_URL"):
-                try:
-                    with tempfile.NamedTemporaryFile(suffix=file_extension, delete=False) as tmp:
-                        tmp.write(video_bytes)
-                        tmp_path = tmp.name
-                    s3_url = rp_upload.upload_image(job_id, tmp_path)
-                    os.remove(tmp_path)
-
-                    output_data.append({
-                        "filename": filename,
-                        "type": "s3_url",
-                        "media": "video",
-                        "data": s3_url
-                    })
-
-                except Exception as e:
-                    errors.append(f"S3 upload error for {filename}: {e}")
-
-            else:
-                b64 = base64.b64encode(video_bytes).decode("utf-8")
-                output_data.append({
-                    "filename": filename,
-                    "type": "base64",
-                    "media": "video",
-                    "data": b64
-                })
+                            output_data.append(
+                                {
+                                    "filename": filename,
+                                    "type": "s3_url",
+                                    "media": output_type,
+                                    "data": s3_url,
+                                }
+                            )
+                        except Exception as e:
+                            errors.append(f"S3 upload error for {filename}: {e}")
+                    else:
+                        b64 = base64.b64encode(file_bytes).decode("utf-8")
+                        output_data.append(
+                            {
+                                "filename": filename,
+                                "type": "base64",
+                                "media": output_type,
+                                "data": b64,
+                            }
+                        )
 
     except websocket.WebSocketException as e:
         print(f"[HANDLER] WebSocket error: {e}")
@@ -444,7 +417,7 @@ def handler(job):
         result["status"] = "success_no_images"
         result["images"] = []
 
-    print(f"[HANDLER] Done. Returning {len(output_data)} image(s).")
+    print(f"[HANDLER] Done. Returning {len(output_data)} file(s).")
     return result
 
 
