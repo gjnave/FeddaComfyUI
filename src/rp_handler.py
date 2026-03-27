@@ -36,6 +36,16 @@ COMFY_HOST = "127.0.0.1:8188"
 REFRESH_WORKER = os.environ.get("REFRESH_WORKER", "false").lower() == "true"
 
 
+def get_output_root():
+    if os.path.isdir("/runpod-volume/output"):
+        return "/runpod-volume/output"
+    if os.path.isdir("/workspace/output"):
+        return "/workspace/output"
+    if os.path.isdir("/app/ComfyUI/output"):
+        return "/app/ComfyUI/output"
+    return "/workspace/output"
+
+
 def _comfy_server_status():
     try:
         resp = requests.get(f"http://{COMFY_HOST}/", timeout=5)
@@ -388,26 +398,31 @@ def handler(job):
                             }
                         )
 
-        # Fallback if Comfy history didn't report files
+        # Fallback: scan output folder if history returned nothing
         if not output_data:
-            output_dir = "/workspace/output/rapid-mega-out"
-            print("DEBUG scanning:", output_dir)
-            for file in os.listdir(output_dir):
-                if not file.lower().endswith((".png", ".jpg", ".jpeg", ".mp4", ".gif")):
-                    continue
+            output_dir = get_output_root()
+            print("[DEBUG] fallback output_dir:", output_dir)
 
-                filepath = os.path.join(output_dir, file)
-                with open(filepath, "rb") as f:
-                    file_bytes = f.read()
+            if os.path.isdir(output_dir):
+                for root, dirs, files in os.walk(output_dir):
+                    for file in files:
+                        if not file.lower().endswith((".png", ".jpg", ".jpeg", ".mp4", ".gif")):
+                            continue
 
-                b64 = base64.b64encode(file_bytes).decode("utf-8")
-                media_type = "video" if file.endswith(".mp4") else "image"
-                output_data.append({
-                    "filename": file,
-                    "type": "base64",
-                    "media": media_type,
-                    "data": b64
-                })
+                        filepath = os.path.join(root, file)
+                        with open(filepath, "rb") as f:
+                            file_bytes = f.read()
+
+                        b64 = base64.b64encode(file_bytes).decode("utf-8")
+                        media_type = "video" if file.lower().endswith(".mp4") else "image"
+                        output_data.append({
+                            "filename": file,
+                            "type": "base64",
+                            "media": media_type,
+                            "data": b64
+                        })
+            else:
+                print("[DEBUG] output folder missing:", output_dir)
 
     except websocket.WebSocketException as e:
         print(f"[HANDLER] WebSocket error: {e}")
