@@ -6,20 +6,21 @@ Receives workflow JSON via RunPod API, submits to local ComfyUI,
 monitors execution via WebSocket, and returns output images/videos/files.
 """
 
-import runpod
-from runpod.serverless.utils import rp_upload
-import json
-import urllib.parse
-import time
-import os
-import requests
 import base64
-from io import BytesIO
-import websocket
-import uuid
-import tempfile
-import traceback
+import json
 import logging
+import os
+import tempfile
+import time
+import traceback
+import urllib.parse
+import uuid
+from io import BytesIO
+
+import requests
+import runpod
+import websocket
+from runpod.serverless.utils import rp_upload
 
 from network_volume import is_network_volume_debug_enabled, run_network_volume_diagnostics
 
@@ -36,14 +37,81 @@ COMFY_HOST = "127.0.0.1:8188"
 REFRESH_WORKER = os.environ.get("REFRESH_WORKER", "false").lower() == "true"
 
 
-def get_output_root():
-    if os.path.isdir("/runpod-volume/output"):
-        return "/runpod-volume/output"
-    if os.path.isdir("/workspace/output"):
-        return "/workspace/output"
-    if os.path.isdir("/app/ComfyUI/output"):
-        return "/app/ComfyUI/output"
-    return "/workspace/output"
+IMAGE_EXTS = {".png", ".jpg", ".jpeg", ".webp", ".gif"}
+VIDEO_EXTS = {".mp4", ".webm", ".mov", ".mkv"}
+ALLOWED_EXTS = IMAGE_EXTS | VIDEO_EXTS
+
+
+def get_output_roots():
+    candidates = [
+        "/runpod-volume/output",
+        "/workspace/output",
+        "/app/ComfyUI/output",
+    ]
+    roots = []
+    seen = set()
+    for path in candidates:
+        real = os.path.realpath(path)
+        if os.path.isdir(path) and real not in seen:
+            roots.append(path)
+            seen.add(real)
+    if not roots:
+        roots.append("/workspace/output")
+    return roots
+
+
+
+def infer_media_type(filename: str, fallback: str | None = None) -> str:
+    ext = os.path.splitext(filename or "")[1].lower()
+    if ext in VIDEO_EXTS:
+        return "video"
+    if ext in IMAGE_EXTS:
+        return "image"
+    if fallback == "videos":
+        return "video"
+    return "image"
+
+
+
+def collect_files_from_roots(roots):
+    collected = []
+    seen_realpaths = set()
+
+    for root in roots:
+        if not os.path.isdir(root):
+            print(f"[DEBUG] output root missing: {root}")
+            continue
+
+        print(f"[DEBUG] scanning output root: {root}")
+        for walk_root, _, files in os.walk(root):
+            for file in files:
+                ext = os.path.splitext(file)[1].lower()
+                if ext not in ALLOWED_EXTS:
+                    continue
+
+                path = os.path.join(walk_root, file)
+                real = os.path.realpath(path)
+                if real in seen_realpaths:
+                    continue
+                seen_realpaths.add(real)
+
+                try:
+                    stat = os.stat(path)
+                except FileNotFoundError:
+                    continue
+
+                collected.append(
+                    {
+                        "path": path,
+                        "filename": file,
+                        "mtime": stat.st_mtime,
+                        "media": infer_media_type(file),
+                    }
+                )
+
+    collected.sort(key=lambda x: x["mtime"], reverse=True)
+    return collected
+
 
 
 def _comfy_server_status():
@@ -54,12 +122,14 @@ def _comfy_server_status():
         return {"reachable": False, "error": str(exc)}
 
 
+
 def _get_comfyui_pid():
     try:
         with open(COMFY_PID_FILE, "r") as f:
             return int(f.read().strip())
     except (FileNotFoundError, ValueError):
         return None
+
 
 
 def _is_comfyui_process_alive():
@@ -73,6 +143,7 @@ def _is_comfyui_process_alive():
         return False
     except PermissionError:
         return True
+
 
 
 def _attempt_websocket_reconnect(ws_url, max_attempts, delay_s, initial_error):
@@ -100,6 +171,7 @@ def _attempt_websocket_reconnect(ws_url, max_attempts, delay_s, initial_error):
     )
 
 
+
 def validate_input(job_input):
     if job_input is None:
         return None, "Please provide input"
@@ -121,6 +193,7 @@ def validate_input(job_input):
             return None, "'images' must be a list of objects with 'name' and 'image' keys"
 
     return {"workflow": workflow, "images": images}, None
+
 
 
 def check_server(url, retries=0, delay=50):
@@ -156,6 +229,7 @@ def check_server(url, retries=0, delay=50):
         time.sleep(delay / 1000)
 
 
+
 def upload_images(images):
     if not images:
         return {"status": "success", "message": "No images to upload", "details": []}
@@ -186,6 +260,7 @@ def upload_images(images):
     if errors:
         return {"status": "error", "message": "Some images failed to upload", "details": errors}
     return {"status": "success", "message": "All images uploaded", "details": responses}
+
 
 
 def queue_workflow(workflow, client_id):
@@ -223,10 +298,12 @@ def queue_workflow(workflow, client_id):
     return response.json()
 
 
+
 def get_history(prompt_id):
     response = requests.get(f"http://{COMFY_HOST}/history/{prompt_id}", timeout=30)
     response.raise_for_status()
     return response.json()
+
 
 
 def get_image_data(filename, subfolder, image_type):
@@ -239,6 +316,17 @@ def get_image_data(filename, subfolder, image_type):
     except Exception as e:
         print(f"[HANDLER] Error fetching {filename}: {e}")
         return None
+
+
+
+def finalize_output_data(output_data):
+    def sort_key(item):
+        media_rank = 0 if item.get("media") == "video" else 1
+        return (media_rank, item.get("filename", ""))
+
+    output_data.sort(key=sort_key)
+    return output_data
+
 
 
 def handler(job):
@@ -343,7 +431,7 @@ def handler(job):
         print(f"[HANDLER] Processing {len(outputs)} output node(s)...")
         print("[DEBUG] OUTPUTS:", json.dumps(outputs, indent=2))
 
-        for node_id, node_output in outputs.items():
+        for _, node_output in outputs.items():
             for output_type, items in node_output.items():
                 if not isinstance(items, list):
                     continue
@@ -365,6 +453,7 @@ def handler(job):
                         continue
 
                     file_extension = os.path.splitext(filename)[1] or ""
+                    media_type = infer_media_type(filename, output_type)
 
                     if os.environ.get("BUCKET_ENDPOINT_URL"):
                         try:
@@ -381,7 +470,7 @@ def handler(job):
                                 {
                                     "filename": filename,
                                     "type": "s3_url",
-                                    "media": output_type,
+                                    "media": media_type,
                                     "data": s3_url,
                                 }
                             )
@@ -393,36 +482,40 @@ def handler(job):
                             {
                                 "filename": filename,
                                 "type": "base64",
-                                "media": output_type,
+                                "media": media_type,
                                 "data": b64,
                             }
                         )
 
-        # Fallback: scan output folder if history returned nothing
+        # Fallback: scan output roots if history returned nothing.
         if not output_data:
-            output_dir = get_output_root()
-            print("[DEBUG] fallback output_dir:", output_dir)
+            roots = get_output_roots()
+            print("[DEBUG] fallback output roots:", roots)
 
-            if os.path.isdir(output_dir):
-                for root, dirs, files in os.walk(output_dir):
-                    for file in files:
-                        if not file.lower().endswith((".png", ".jpg", ".jpeg", ".mp4", ".gif")):
-                            continue
+            # Give the volume a brief moment in case the file write lands just after history.
+            time.sleep(1)
+            candidates = collect_files_from_roots(roots)
 
-                        filepath = os.path.join(root, file)
-                        with open(filepath, "rb") as f:
-                            file_bytes = f.read()
+            if candidates:
+                latest_video = next((c for c in candidates if c["media"] == "video"), None)
+                latest_image = next((c for c in candidates if c["media"] == "image"), None)
+                chosen = [c for c in [latest_video, latest_image] if c is not None]
 
-                        b64 = base64.b64encode(file_bytes).decode("utf-8")
-                        media_type = "video" if file.lower().endswith(".mp4") else "image"
-                        output_data.append({
-                            "filename": file,
+                for item in chosen:
+                    with open(item["path"], "rb") as f:
+                        file_bytes = f.read()
+
+                    b64 = base64.b64encode(file_bytes).decode("utf-8")
+                    output_data.append(
+                        {
+                            "filename": item["filename"],
                             "type": "base64",
-                            "media": media_type,
-                            "data": b64
-                        })
+                            "media": item["media"],
+                            "data": b64,
+                        }
+                    )
             else:
-                print("[DEBUG] output folder missing:", output_dir)
+                print("[DEBUG] no output files found in fallback scan")
 
     except websocket.WebSocketException as e:
         print(f"[HANDLER] WebSocket error: {e}")
@@ -441,6 +534,8 @@ def handler(job):
     finally:
         if ws and ws.connected:
             ws.close()
+
+    finalize_output_data(output_data)
 
     result = {}
     if output_data:
