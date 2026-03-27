@@ -327,6 +327,7 @@ def handler(job):
         print(f"[HANDLER] Processing {len(outputs)} output node(s)...")
 
         for node_id, node_output in outputs.items():
+            print("DEBUG OUTPUTS:", outputs)
 
     # -------- IMAGES --------
         if "images" in node_output:
