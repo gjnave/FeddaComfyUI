@@ -327,35 +327,91 @@ def handler(job):
         print(f"[HANDLER] Processing {len(outputs)} output node(s)...")
 
         for node_id, node_output in outputs.items():
-            if "images" in node_output:
-                for image_info in node_output["images"]:
-                    filename = image_info.get("filename")
-                    subfolder = image_info.get("subfolder", "")
-                    img_type = image_info.get("type")
+			# -------- IMAGES --------
+			if "images" in node_output:
+				for image_info in node_output["images"]:
+					filename = image_info.get("filename")
+					subfolder = image_info.get("subfolder", "")
+					img_type = image_info.get("type")
 
-                    if img_type == "temp" or not filename:
-                        continue
+					if img_type == "temp" or not filename:
+						continue
 
-                    image_bytes = get_image_data(filename, subfolder, img_type)
-                    if not image_bytes:
-                        errors.append(f"Failed to fetch {filename}")
-                        continue
+					image_bytes = get_image_data(filename, subfolder, img_type)
+					if not image_bytes:
+						errors.append(f"Failed to fetch {filename}")
+						continue
 
-                    file_extension = os.path.splitext(filename)[1] or ".png"
+					file_extension = os.path.splitext(filename)[1] or ".png"
 
-                    if os.environ.get("BUCKET_ENDPOINT_URL"):
-                        try:
-                            with tempfile.NamedTemporaryFile(suffix=file_extension, delete=False) as tmp:
-                                tmp.write(image_bytes)
-                                tmp_path = tmp.name
-                            s3_url = rp_upload.upload_image(job_id, tmp_path)
-                            os.remove(tmp_path)
-                            output_data.append({"filename": filename, "type": "s3_url", "data": s3_url})
-                        except Exception as e:
-                            errors.append(f"S3 upload error for {filename}: {e}")
-                    else:
-                        b64 = base64.b64encode(image_bytes).decode("utf-8")
-                        output_data.append({"filename": filename, "type": "base64", "data": b64})
+					if os.environ.get("BUCKET_ENDPOINT_URL"):
+						try:
+							with tempfile.NamedTemporaryFile(suffix=file_extension, delete=False) as tmp:
+								tmp.write(image_bytes)
+								tmp_path = tmp.name
+							s3_url = rp_upload.upload_image(job_id, tmp_path)
+							os.remove(tmp_path)
+
+							output_data.append({
+								"filename": filename,
+								"type": "s3_url",
+								"data": s3_url
+							})
+
+						except Exception as e:
+							errors.append(f"S3 upload error for {filename}: {e}")
+
+					else:
+						b64 = base64.b64encode(image_bytes).decode("utf-8")
+						output_data.append({
+							"filename": filename,
+							"type": "base64",
+							"data": b64
+						})
+
+			# -------- VIDEOS (VHS_VideoCombine) --------
+			if "videos" in node_output:
+				for video_info in node_output["videos"]:
+					filename = video_info.get("filename")
+					subfolder = video_info.get("subfolder", "")
+					vid_type = video_info.get("type")
+
+					if not filename:
+						continue
+
+					video_bytes = get_image_data(filename, subfolder, vid_type)
+					if not video_bytes:
+						errors.append(f"Failed to fetch {filename}")
+						continue
+
+					file_extension = os.path.splitext(filename)[1] or ".mp4"
+
+					if os.environ.get("BUCKET_ENDPOINT_URL"):
+						try:
+							with tempfile.NamedTemporaryFile(suffix=file_extension, delete=False) as tmp:
+								tmp.write(video_bytes)
+								tmp_path = tmp.name
+							s3_url = rp_upload.upload_image(job_id, tmp_path)
+							os.remove(tmp_path)
+
+							output_data.append({
+								"filename": filename,
+								"type": "s3_url",
+								"media": "video",
+								"data": s3_url
+							})
+
+						except Exception as e:
+							errors.append(f"S3 upload error for {filename}: {e}")
+
+					else:
+						b64 = base64.b64encode(video_bytes).decode("utf-8")
+						output_data.append({
+							"filename": filename,
+							"type": "base64",
+							"media": "video",
+							"data": b64
+						})
 
     except websocket.WebSocketException as e:
         print(f"[HANDLER] WebSocket error: {e}")
