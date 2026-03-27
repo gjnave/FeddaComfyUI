@@ -242,6 +242,12 @@ def handler(job):
     workflow = validated_data["workflow"]
     input_images = validated_data.get("images")
 
+    print("[DEBUG] input_images:", json.dumps(input_images, indent=2) if input_images else "None")
+
+    for node_id, node in workflow.items():
+        if node.get("class_type") == "LoadImage":
+           print(f"[DEBUG] LoadImage node {node_id}: {json.dumps(node, indent=2)}")
+
     if not check_server(
         f"http://{COMFY_HOST}/",
         COMFY_API_AVAILABLE_MAX_RETRIES,
